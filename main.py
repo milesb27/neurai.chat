@@ -9,6 +9,11 @@ app = Flask(__name__)
 def homepage():
     return render_template("home.html")
 
+# Form page route
+@app.route('/form')
+def form_page():
+    return render_template("form.html")
+
 # Route for appointment availability (static for now)
 @app.route('/api/availability', methods=['GET'])
 def get_availability():

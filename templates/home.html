@@ -1,0 +1,195 @@
+
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Columbia Neurological Surgery - Patient Portal</title>
+    <style>
+        body {
+            font-family: 'Times New Roman', Times, serif;
+            font-size: 16px;
+            padding: 30px;
+            background-color: #f9f9f9;
+            text-align: center;
+        }
+
+        img.logo {
+            width: 300px;
+            margin-bottom: 20px;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background-color: #ffffff;
+            padding: 25px;
+            border-radius: 10px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+        }
+
+        .chatbot-section {
+            margin-bottom: 40px;
+            padding: 20px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+        }
+
+        .form-section {
+            padding: 20px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+        }
+
+        button {
+            background-color: #0033A0;
+            color: white;
+            padding: 10px 15px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+            margin: 10px;
+        }
+
+        button:hover {
+            background-color: #001F5C;
+        }
+
+        h1 {
+            color: #333;
+            font-size: 32px;
+        }
+
+        h2 {
+            color: #0033A0;
+            font-size: 24px;
+        }
+
+        #chat-messages {
+            height: 300px;
+            overflow-y: auto;
+            border: 1px solid #ddd;
+            padding: 10px;
+            margin: 10px 0;
+            text-align: left;
+        }
+
+        #chat-input {
+            width: 70%;
+            padding: 8px;
+            margin: 5px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+        }
+    </style>
+</head>
+<body>
+    <!-- Logo Image -->
+    <img src="/static/logo.png" alt="Columbia Neurological Surgery Logo" class="logo">
+
+    <div class="container">
+        <h1>Welcome to Columbia Neurological Surgery</h1>
+        
+        <div class="chatbot-section">
+            <h2>AI-Powered Intake Assistant</h2>
+            <p>Our chatbot will help gather information about your condition to streamline your appointment.</p>
+            
+            <div id="chat-messages">
+                <div style="color: #666; font-style: italic;">Chatbot: Hello! I'm here to help you with your appointment request. Let me ask you a few questions...</div>
+            </div>
+            
+            <div>
+                <input type="text" id="chat-input" placeholder="Type your response here...">
+                <button onclick="sendMessage()">Send</button>
+                <button onclick="startIntake()">Start Intake</button>
+            </div>
+        </div>
+
+        <div class="form-section">
+            <h2>Or Fill Out Our Form Directly</h2>
+            <p>If you prefer, you can skip the chatbot and fill out our appointment request form directly.</p>
+            <button onclick="window.location.href='/form'">Go to Form</button>
+        </div>
+
+        <div style="margin-top: 30px;">
+            <h2>Check Available Appointments</h2>
+            <button onclick="checkAvailability()">View Availability</button>
+            <div id="availability-display" style="margin-top: 15px; text-align: left;"></div>
+        </div>
+    </div>
+
+    <script>
+        let intakeData = {};
+
+        function sendMessage() {
+            const input = document.getElementById('chat-input');
+            const messages = document.getElementById('chat-messages');
+            
+            if (input.value.trim() === '') return;
+            
+            // Display user message
+            messages.innerHTML += `<div style="margin: 10px 0; color: #0033A0;"><strong>You:</strong> ${input.value}</div>`;
+            
+            // Send to intake API
+            fetch('/api/intake', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(intakeData)
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.question) {
+                    messages.innerHTML += `<div style="margin: 10px 0; color: #666;"><strong>Chatbot:</strong> ${data.question}</div>`;
+                } else if (data.message) {
+                    messages.innerHTML += `<div style="margin: 10px 0; color: #28a745;"><strong>Chatbot:</strong> ${data.message}</div>`;
+                }
+                messages.scrollTop = messages.scrollHeight;
+            });
+            
+            input.value = '';
+        }
+
+        function startIntake() {
+            const messages = document.getElementById('chat-messages');
+            messages.innerHTML = '<div style="color: #666; font-style: italic;">Chatbot: Starting intake process...</div>';
+            
+            fetch('/api/intake', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({})
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.question) {
+                    messages.innerHTML += `<div style="margin: 10px 0; color: #666;"><strong>Chatbot:</strong> ${data.question}</div>`;
+                }
+                messages.scrollTop = messages.scrollHeight;
+            });
+        }
+
+        function checkAvailability() {
+            fetch('/api/availability')
+            .then(response => response.json())
+            .then(data => {
+                const display = document.getElementById('availability-display');
+                let html = '<h3>Available Appointments:</h3><ul>';
+                data.available_slots.forEach(slot => {
+                    html += `<li>${slot.date} at ${slot.time}</li>`;
+                });
+                html += '</ul>';
+                display.innerHTML = html;
+            });
+        }
+
+        // Allow Enter key to send messages
+        document.getElementById('chat-input').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                sendMessage();
+            }
+        });
+    </script>
+</body>
+</html>
