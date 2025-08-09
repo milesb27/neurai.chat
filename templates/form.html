@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Patient Intake Form</title>
+  <style>
+    body {
+      input, select, textarea, label, button, h2, p {
+        font-family: 'Times New Roman', Times, serif;
+        font-size: 16px;
+      }
+      font-family: 'Times New Roman', Times, serif;
+      font-size: 16px;
+      padding: 30px;
+      background-color: #f9f9f9;
+      text-align: center;
+    }
+
+    img.logo {
+      width: 300px;
+      margin-bottom: 20px;
+    }
+
+    form {
+      display: inline-block;
+      text-align: left;
+      background-color: #ffffff;
+      padding: 25px;
+      border-radius: 10px;
+      box-shadow: 0 0 10px rgba(0,0,0,0.1);
+    }
+
+    label {
+      font-weight: bold;
+    }
+
+    input, select {
+      width: 100%;
+      padding: 8px;
+      margin-top: 5px;
+      margin-bottom: 15px;
+      border: 1px solid #ccc;
+      border-radius: 5px;
+    }
+
+    button {
+      background-color: #0033A0;
+      color: white;
+      padding: 10px 15px;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+      font-size: 16px;
+    }
+
+    button:hover {
+      background-color: #001F5C;
+    }
+    .form-header {
+      max-width: 600px;
+      margin: 0 auto 30px auto;
+      text-align: center;
+    }
+
+    .form-header h2 {
+      font-size: 28px;
+      color: #333;
+      margin-bottom: 10px;
+    }
+
+    .form-header p {
+      font-size: 16px;
+      color: #555;
+    }
+
+  </style>
+</head>
+<body>
+
+  <!-- Logo Image -->
+  <img src="/static/logo.png" alt="Columbia Neurological Surgery Logo" class="logo">
+
+
+  <div class="form-header">
+    <h2>Request an Appointment</h2>
+    <p>We ask that each patient have recent imaging ready for their first appointment.</p>
+  </div>
+
+
+  <form method="POST">
+    <label for="contact">Email Address:</label>
+    <input type="email" id="contact" name="contact">
+
+    <label for="phone">Phone Number:</label>
+    <input type="text" id="phone" name="phone">
+    <label for="age_21_plus">Are you 21 or older?</label>
+    <select id="age_21_plus" name="age_21_plus" required>
+      <option value="">-- Select an Option --</option>
+      <option value="Yes">Yes</option>
+      <option value="No">No</option>
+    </select>
+
+    <label for="condition">Condition:</label>
+    <select id="condition" name="condition" required>
+      <option value="">-- Select a Condition --</option>
+      <option value="Spine">Spine</option>
+      <option value="Brain Tumor">Brain Tumor</option>
+      <option value="Blood Vessel Problem (Stroke)">Blood Vessel Problem (Stroke)</option>
+      <option value="Epilepsy">Epilepsy</option>
+      <option value="Movement Disorder">Movement Disorder</option>
+      <option value="Pain">Pain</option>
+      <option value="Peripheral Nerve">Peripheral Nerve</option>
+      <option value="Ed Doherty">Ed Doherty</option>
+      <option value="Other">Other</option>
+    </select>
+
+    <label for="appointment_type">What is the appointment for?</label>
+    <select id="appointment_type" name="appointment_type" required onchange="toggleOtherInput()">
+      <option value="">-- Select an Option --</option>
+      <option value="Consultation">Consultation</option>
+      <option value="Schedule Surgery">Schedule Surgery</option>
+      <option value="Other">Other</option>
+    </select>
+
+    <div id="other_input" style="display: none;">
+      <label for="other_info">Please provide more information:</label>
+      <textarea id="other_info" name="other_info" rows="4" cols="50"></textarea>
+    </div>
+
+    <br>
+    <button type="submit">Submit Referral</button>
+  </form>
+
+  <script>
+    function toggleOtherInput() {
+      const type = document.getElementById("appointment_type").value;
+      const otherBox = document.getElementById("other_input");
+      otherBox.style.display = type === "Other" ? "block" : "none";
+    }
+  </script>
+
+
+</body>
+</html>
+
