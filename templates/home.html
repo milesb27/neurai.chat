@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html>
 <head>
@@ -100,7 +99,7 @@
             <div>
                 <input type="text" id="chat-input" placeholder="Type your response here...">
                 <button onclick="sendMessage()">Send</button>
-                <button onclick="startIntake()">Start Intake</button>
+                <button onclick="startIntake()">Restart Intake</button>
             </div>
         </div>
 
@@ -120,53 +119,176 @@
     <script>
         let intakeData = {};
 
+        // utility functions for messages and buttons
+        function addBotMessage(text) {
+            const messages = document.getElementById('chat-messages');
+            const formatted = text.replace(/\n/g, "<br>");  // 🔥 this is key
+            const wrapper = document.createElement('div');
+            wrapper.style.margin = '10px 0';
+            wrapper.style.color = '#666';
+            wrapper.innerHTML = `<strong>Chatbot:</strong> ${text}`;
+            messages.appendChild(wrapper);
+            messages.scrollTop = messages.scrollHeight;
+        }
+
+        function addButtons(options) {
+            const messages = document.getElementById('chat-messages');
+
+            // 🔴 Clear previous buttons if any exist
+            const oldButtons = messages.querySelectorAll('div.button-row');
+            oldButtons.forEach(btn => btn.remove());
+
+            // 🟢 Create a new row for the buttons
+            const buttonRow = document.createElement('div');
+            buttonRow.className = 'button-row'; // Add class for identification
+            buttonRow.style.margin = "10px 0";
+
+            options.forEach(option => {
+                const btn = document.createElement('button');
+                btn.innerText = option.label;
+                btn.style.marginRight = "10px";
+                btn.onclick = () => sendQuickResponse(option.value);
+                buttonRow.appendChild(btn);
+            });
+
+            messages.appendChild(buttonRow);
+            messages.scrollTop = messages.scrollHeight;
+        }
+        
+// handle quick responses
+        function sendQuickResponse(text) {
+            const input = document.getElementById('chat-input');
+            input.value = text;
+            sendMessage();
+        }
+
         function sendMessage() {
             const input = document.getElementById('chat-input');
             const messages = document.getElementById('chat-messages');
-            
+
             if (input.value.trim() === '') return;
-            
+
+            const userText = input.value.trim();
+
             // Display user message
-            messages.innerHTML += `<div style="margin: 10px 0; color: #0033A0;"><strong>You:</strong> ${input.value}</div>`;
-            
-            // Send to intake API
+            messages.innerHTML += `<div style="margin: 10px 0; color: #0033A0;"><strong>You:</strong> ${userText}</div>`;
+
+            // Send to intake API with user message
             fetch('/api/intake', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
                 },
-                body: JSON.stringify(intakeData)
+                body: JSON.stringify({ message: userText })  // ✅ This is the fix
             })
             .then(response => response.json())
             .then(data => {
-                if (data.question) {
-                    messages.innerHTML += `<div style="margin: 10px 0; color: #666;"><strong>Chatbot:</strong> ${data.question}</div>`;
-                } else if (data.message) {
-                    messages.innerHTML += `<div style="margin: 10px 0; color: #28a745;"><strong>Chatbot:</strong> ${data.message}</div>`;
+                const botReply = data.assistantMessage?.content || data.message || data.question;
+                if (botReply) {
+                    addBotMessage(botReply);
+                    checkForButtons(botReply);
                 }
-                messages.scrollTop = messages.scrollHeight;
             });
-            
+
+
             input.value = '';
         }
 
+        // auto-create buttons from responses
+        function checkForButtons(botText) {
+            const trimmed = botText.toLowerCase().replace(/\s+/g, ' ').trim();
+            console.log("Checking for buttons in bot reply:", trimmed);
+            const messages = document.getElementById('chat-messages');
+            const oldButtons = messages.querySelectorAll('div.button-row');
+                oldButtons.forEach(btn => btn.remove());
+
+            // Main greeting with numbered options
+            if (
+                trimmed.includes("help you today") ||
+                (trimmed.includes("schedule appointment") && trimmed.includes("imaging"))
+            ) {
+                addButtons([
+                    { label: "Schedule appointment", value: "Schedule appointment" },
+                    { label: "Imaging", value: "Imaging" },
+                    { label: "Find doctors", value: "Find doctors" },
+                    { label: "Other", value: "Other" }
+                ]);
+            }
+
+            // Schedule follow-up
+            if (trimmed.includes("what is your issue")) {
+                addButtons([
+                    { label: "Tumor", value: "tumor" },
+                    { label: "Stroke/blood", value: "stroke" },
+                    { label: "Spine", value: "spine" },
+                    { label: "Pediatric", value: "pediatric" },
+                    { label: "Other", value: "other" }
+                ]);
+            }
+
+            // Tristate follow-up
+            if (trimmed.includes("are you located in the tristate area")) {
+                addButtons([
+                    { label: "Yes", value: "Yes" },
+                    { label: "No", value: "No" }
+                ]);
+            }
+            // after provide/email
+            if (trimmed.includes("would you like us to contact")) {
+                addButtons([
+                    { label: "Email", value: "email" },
+                    { label: "Phone", value: "phone" },
+                    { label: "Both", value: "both" }
+                ]);
+            }
+            
+            // Imaging follow
+            if (trimmed.includes("need some more information") && trimmed.includes("do you")) {
+              addButtons([
+                { label: "Have imaging", value: "Have imaging" },
+                { label: "Need imaging", value: "Need imaging" }
+              ]);
+            }
+
+            if (trimmed.includes("connect you with an imaging")) {
+                addButtons([
+                    { label: "Yes", value: "Yes, I do" },
+                    { label: "No", value: "No, I don't" }
+                ]);
+            }
+
+            // Doctor follow
+            if (trimmed.includes("interest in our providers")) {
+                addButtons([
+                    { label: "Spine", value: "spine surgeons" },
+                    { label: "Tumor", value: "tumor surgeons" },
+                    { label: "Pain", value: "peripheral surgeons" },
+                    { label: "Pediatric", value: "pediatric surgeons" },
+                    { label: "General", value: "general" }
+                ]);
+            }
+                
+        }
+
+
         function startIntake() {
             const messages = document.getElementById('chat-messages');
-            messages.innerHTML = '<div style="color: #666; font-style: italic;">Chatbot: Starting intake process...</div>';
-            
+            messages.innerHTML = `<div style="margin: 10px 0; color: #666;"><strong>Chatbot:</strong> Starting intake...</div>`;
+
             fetch('/api/intake', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
                 },
-                body: JSON.stringify({})
+                body: JSON.stringify({ message: "hello" })
             })
             .then(response => response.json())
             .then(data => {
-                if (data.question) {
-                    messages.innerHTML += `<div style="margin: 10px 0; color: #666;"><strong>Chatbot:</strong> ${data.question}</div>`;
+                const botReply = data.assistantMessage?.content || data.message || data.question;
+                if (botReply) {
+                    addBotMessage(botReply);
+                    checkForButtons(botReply); // trigger greeting
                 }
-                messages.scrollTop = messages.scrollHeight;
             });
         }
 
@@ -185,11 +307,15 @@
         }
 
         // Allow Enter key to send messages
-        document.getElementById('chat-input').addEventListener('keypress', function(e) {
+document.getElementById('chat-input').addEventListener('keypress', function(e) {
             if (e.key === 'Enter') {
                 sendMessage();
             }
         });
+        // run greeting as soon as page loads
+window.addEventListener('load', function () {
+            startIntake();
+             });
     </script>
 </body>
 </html>
