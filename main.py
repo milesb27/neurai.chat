@@ -1,5 +1,4 @@
 from flask import Flask, request, jsonify, render_template
-from gpt_utils import ask_gpt
 
 import csv
 from datetime import datetime
